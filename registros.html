@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Horarios</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">
+      <img src="logo.jpeg" alt="Logo" height="30" class="d-inline-block align-top">
+      Control Horarios
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="https://control-de-vehiculos-386ee.web.app/registros.html">Crear Registros</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-6">
+      <h2>Registro de Horarios</h2>
+      <form id="registroForm">
+        <div class="form-group">
+          <label for="identificacionConductor">Identificación del Conductor</label>
+          <input type="text" class="form-control" id="identificacionConductor" required>
+          <button type="button" class="btn btn-primary mt-2" onclick="buscarConductor()">Buscar Conductor</button>
+        </div>
+        <!-- Bootstrap Alert -->
+        <div class="alert alert-dark mt-3" role="alert" id="conductorAlert" style="display: none;">
+          <strong>Conductor :</strong>
+          <span id="nombreConductor"></span>
+          <span id="documentoConductor"></span>
+        </div>
+        <div class="form-group">
+          <label for="vehiculo">Vehículo</label>
+          <select class="form-control" id="vehiculo" disabled required>
+            <!-- Opciones de vehículos se llenarán dinámicamente con JavaScript -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cliente">Cliente</label>
+          <select class="form-control" id="cliente" disabled required>
+            <!-- Opciones de clientes se llenarán dinámicamente con JavaScript -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fechaInicio">Fecha y Hora de Inicio</label>
+          <input type="datetime-local" class="form-control" id="fechaInicio" disabled required>
+        </div>
+        <div class="form-group">
+          <label for="fechaFin">Fecha y Hora de Finalización</label>
+          <input type="datetime-local" class="form-control" id="fechaFin" disabled>
+        </div>
+        <button type="button" id="guardarBtn" class="btn btn-success" onclick="crearRegistro()">Crear Registro</button>
+      </form>
+    </div>
+    <div class="col-md-6">
+      <h2>Registros</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Identificación Conductor</th>
+            <th>Vehículo</th>
+            <th>Cliente</th>
+            <th>Fecha Inicio</th>
+            <th>Fecha Fin</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="registrosBody">
+          <!-- Filas de la tabla se llenarán dinámicamente con JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuidv4.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-auth.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoN5r8e3Cq9RdsYt08xF-kvjrfdNHtNOk",
+    authDomain: "control-de-vehiculos-386ee.firebaseapp.com",
+    projectId: "control-de-vehiculos-386ee",
+    storageBucket: "control-de-vehiculos-386ee.appspot.com",
+    messagingSenderId: "911657234177",
+    appId: "1:911657234177:web:ddda940af1a762108fb500",
+    measurementId: "G-WJS4DGC2C7",
+    databaseURL: "https://control-de-vehiculos-386ee-default-rtdb.firebaseio.com"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const database = firebase.database();
+
+  function buscarConductor() {
+    const identificacion = document.getElementById('identificacionConductor').value;
+    const conductorRef = database.ref('conductores').orderByChild('identificacion').equalTo(identificacion);
+
+    conductorRef.once('value', snapshot => {
+      if (snapshot.exists()) {
+        const conductor = snapshot.val()[Object.keys(snapshot.val())[0]];
+        mostrarAlertaConductor(conductor.nombre,conductor.apellido, conductor.identificacion);
+        document.getElementById('vehiculo').disabled = false;
+        document.getElementById('cliente').disabled = false;
+        document.getElementById('fechaInicio').disabled = false;
+        cargarRegistros();
+      } else {
+        alert('Conductor no encontrado. Verifica la identificación.');
+      }
+    });
+  }
+
+  function mostrarAlertaConductor(nombre, apellido, documento) {
+    const alertConductor = document.getElementById('conductorAlert');
+    const nombreConductorSpan = document.getElementById('nombreConductor');
+    const documentoConductorSpan = document.getElementById('documentoConductor');
+
+    nombreConductorSpan.textContent = `${nombre} ${apellido}`;
+    //documentoConductorSpan.textContent = ` Documento: ${documento}`;
+
+    alertConductor.style.display = 'block';
+  }
+
+  function llenarOpciones() {
+    const vehiculosRef = database.ref('vehiculos');
+    const clientesRef = database.ref('clientes');
+
+    const vehiculoSelect = document.getElementById('vehiculo');
+    const clienteSelect = document.getElementById('cliente');
+
+    vehiculosRef.once('value', snapshot => {
+      snapshot.forEach(childSnapshot => {
+        const vehiculo = childSnapshot.val();
+        const option = document.createElement('option');
+        option.value = childSnapshot.key;
+        option.text = `${vehiculo.placa} - ${vehiculo.tipo}`;
+        vehiculoSelect.add(option);
+      });
+    });
+
+    clientesRef.once('value', snapshot => {
+      snapshot.forEach(childSnapshot => {
+        const cliente = childSnapshot.val();
+        const option = document.createElement('option');
+        option.value = childSnapshot.key;
+        option.text = `${cliente.id} - ${cliente.nombre}`;
+        clienteSelect.add(option);
+      });
+    });
+  }
+
+  function validarCampos() {
+    const identificacion = document.getElementById('identificacionConductor').value;
+    const vehiculo = document.getElementById('vehiculo').value;
+    const cliente = document.getElementById('cliente').value;
+    const fechaInicio = document.getElementById('fechaInicio').value;
+
+    if (!identificacion || !vehiculo || !cliente || !fechaInicio) {
+      alert('Completa todos los campos antes de guardar.');
+      return false;
+    }
+
+    return true;
+  }
+
+  function crearRegistro() {
+    if (!validarCampos()) return;
+
+    const identificacion = document.getElementById('identificacionConductor').value;
+    const vehiculoId = document.getElementById('vehiculo').value;
+    const clienteId = document.getElementById('cliente').value;
+    const fechaInicio = document.getElementById('fechaInicio').value;
+
+    const fechaFin = document.getElementById('fechaFin').value || '';
+
+    const registroId = uuidv4();
+    const registrosRef = database.ref('registros');
+
+    registrosRef.child(registroId).set({
+      registroId : registroId,
+      identificacionConductor: identificacion,
+      vehiculoId: vehiculoId,
+      clienteId: clienteId,
+      fechaInicio: fechaInicio,
+      fechaFin: fechaFin
+    });
+
+    document.getElementById('registroForm').reset();
+    document.getElementById('vehiculo').disabled = true;
+    document.getElementById('cliente').disabled = true;
+    document.getElementById('fechaInicio').disabled = true;
+    cargarRegistros();
+  }
+
+  function cargarRegistros() {
+  const identificacion = document.getElementById('identificacionConductor').value;    
+  const registrosRef = database.ref('registros');
+  const vehiculosRef = database.ref('vehiculos');
+  const clientesRef = database.ref('clientes');
+
+  registrosRef.orderByChild('identificacionConductor').equalTo(identificacion).once('value').then(snapshot => {
+    const registrosBody = document.getElementById('registrosBody');
+    registrosBody.innerHTML = '';
+
+    const registros = [];
+    snapshot.forEach(childSnapshot => {
+      registros.push({ key: childSnapshot.key, value: childSnapshot.val() });
+    });
+
+    // Función para cargar un registro y después llamar a la siguiente
+    function cargarRegistroSecuencial(index) {
+      if (index < registros.length) {
+        const registro = registros[index];
+        const row = registrosBody.insertRow();
+
+        row.insertCell(0).textContent = registro.value.identificacionConductor;
+
+        // Cargar el vehículo de forma secuencial
+        vehiculosRef.child(registro.value.vehiculoId).once('value').then(vehiculoSnapshot => {
+          const vehiculo = vehiculoSnapshot.val();
+          row.insertCell(1).textContent = `${vehiculo.placa} - ${vehiculo.tipo}`;
+        }).then(() => {
+          // Cargar el cliente de forma secuencial
+          clientesRef.child(registro.value.clienteId).once('value').then(clienteSnapshot => {
+            const cliente = clienteSnapshot.val();
+            row.insertCell(2).textContent = `${cliente.id} - ${cliente.nombre}`;
+          }).then(() => {
+            row.insertCell(3).textContent = registro.value.fechaInicio;
+            row.insertCell(4).textContent = registro.value.fechaFin;
+
+            if (!registro.value.fechaFin) {
+              const editarBtn = document.createElement('button');
+              editarBtn.className = 'btn btn-warning btn-sm';
+              editarBtn.textContent = 'Editar';
+              editarBtn.onclick = () => editarRegistro(registro.key, registro.value);
+              row.insertCell(5).appendChild(editarBtn);
+            } else {
+              row.insertCell(5).textContent = '';
+            }
+
+            // Llamar a la siguiente iteración
+            cargarRegistroSecuencial(index + 1);
+          });
+        });
+      }
+    }
+
+    // Comenzar la carga secuencial
+    cargarRegistroSecuencial(0);
+  });
+}
+
+function editarRegistro(registroId, registro) {
+    document.getElementById('identificacionConductor').value = registro.identificacionConductor;
+    document.getElementById('vehiculo').value = registro.vehiculoId;
+    document.getElementById('cliente').value = registro.clienteId;
+    document.getElementById('fechaInicio').value = registro.fechaInicio;
+    document.getElementById('fechaFin').value = registro.fechaFin || '';
+    
+    document.getElementById('vehiculo').disabled = true;
+    document.getElementById('cliente').disabled = true;
+    document.getElementById('fechaInicio').disabled = true;
+    document.getElementById('fechaFin').disabled = false;
+
+    // Modificar el botón para que ejecute la función de editar existente
+    const guardarBtn = document.getElementById('guardarBtn');
+    guardarBtn.textContent = 'Editar';
+    guardarBtn.onclick = () => editarRegistroExistente(registroId);
+  }
+
+  // Función para editar un registro existente (actualizar la fecha de finalización)
+  function editarRegistroExistente(registroId) {
+    const fechaFin = document.getElementById('fechaFin').value;
+
+    if (!fechaFin) {
+      alert('Completa la fecha de finalización antes de guardar.');
+      return;
+    }
+
+    const registrosRef = database.ref('registros');
+    registrosRef.child(registroId).update({
+      fechaFin: fechaFin
+    });
+
+    // Limpiar el formulario y deshabilitar campos
+    document.getElementById('registroForm').reset();
+    document.getElementById('vehiculo').disabled = true;
+    document.getElementById('cliente').disabled = true;
+    document.getElementById('fechaInicio').disabled = true;
+
+    // Restaurar el botón a "Crear"
+    const guardarBtn = document.getElementById('guardarBtn');
+    guardarBtn.textContent = 'Crear';
+    guardarBtn.onclick = crearRegistro;
+
+    // Volver a cargar los registros actualizados en la tabla
+    cargarRegistros();
+  }
+
+
+  llenarOpciones();
+</script>
+
+</body>
+</html>

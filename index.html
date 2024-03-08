@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Horarios</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    #login-section {
+      text-align: center;
+    }
+
+    #login-section img {
+      margin-bottom: 20px; /* Ajusta según sea necesario */
+    }
+
+    #signup-section img {
+      margin-bottom: 20px; /* Ajusta según sea necesario */
+    }
+
+    #signup-section {
+      text-align: center;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div class="container">
+    <div class="row justify-content-center mt-5">
+      <div class="col-md-6">
+        <!-- Sección de inicio de sesión -->
+        <div id="login-section">
+          <h1 class="mb-4 text-center">Control Horarios</h1>
+          <img src="logo.jpeg" alt="Logo" height="150" class="d-inline-block align-center">
+          <h2 class="mb-4 text-center">Iniciar Sesión</h2>
+          <form id="loginForm">
+            <div class="form-group">
+              <input type="text" class="form-control" id="userId" placeholder="Correo electrónico" required>
+            </div>
+            <div class="form-group">
+              <input type="password" class="form-control" id="password" placeholder="Contraseña" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+          </form>
+          <p class="mt-3">¿No tienes una cuenta? <a href="#" onclick="mostrarRegistrarse()">Registrarse</a></p>
+          <p class="mt-3"><a href="#" onclick="mostrarRestablecer()">¿Olvidaste tu contraseña?</a></p>
+        </div>
+
+        <!-- Sección de registro (inicialmente oculta) -->
+        <div id="signup-section" style="display: none;">
+          <h1 class="mb-4 text-center">Control Horarios</h1>
+          <img src="logo.jpeg" alt="Logo" height="150" class="d-inline-block align-center">
+          <h2 class="mb-4">Registrarse</h2>
+          <form id="signupForm">
+            <div class="form-group">
+              <input type="text" class="form-control" id="userIdSignUp" placeholder="Correo electrónico" required>
+            </div>
+            <div class="form-group">
+              <input type="password" class="form-control" id="signupPassword" placeholder="Contraseña" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+          </form>
+          <p class="mt-3">¿Ya tienes una cuenta? <a href="#" onclick="mostrarLogin()">Iniciar Sesión</a></p>
+        </div>
+
+        <!-- Sección de restablecer contraseña (inicialmente oculta) -->
+        <div id="reset-section" style="display: none;">
+          <h2 class="mb-4">Restablecer Contraseña</h2>
+          <form id="resetForm">
+            <div class="form-group">
+              <input type="text" class="form-control" id="resetEmail" placeholder="Correo electrónico" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Restablecer Contraseña</button>
+          </form>
+          <p class="mt-3"><a href="#" onclick="mostrarLogin()">Volver al inicio de sesión</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase JavaScript SDK -->
+  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-auth.js"></script>
+
+  <!-- Tu configuración de Firebase -->
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyBoN5r8e3Cq9RdsYt08xF-kvjrfdNHtNOk",
+      authDomain: "control-de-vehiculos-386ee.firebaseapp.com",
+      projectId: "control-de-vehiculos-386ee",
+      storageBucket: "control-de-vehiculos-386ee.appspot.com",
+      messagingSenderId: "911657234177",
+      appId: "1:911657234177:web:ddda940af1a762108fb500",
+      measurementId: "G-WJS4DGC2C7"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    // Función para mostrar el formulario de registro y ocultar el de inicio de sesión
+    function mostrarRegistrarse() {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('signup-section').style.display = 'block';
+      document.getElementById('reset-section').style.display = 'none';
+    }
+
+    // Función para mostrar el formulario de inicio de sesión y ocultar el de registro
+    function mostrarLogin() {
+      document.getElementById('signup-section').style.display = 'none';
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('reset-section').style.display = 'none';
+    }
+
+    // Función para mostrar el formulario de restablecer contraseña y ocultar los demás
+    function mostrarRestablecer() {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('signup-section').style.display = 'none';
+      document.getElementById('reset-section').style.display = 'block';
+    }
+
+    // Función para manejar el inicio de sesión
+    function iniciarSesion() {
+      var userId = document.getElementById('userId').value;
+      var password = document.getElementById('password').value;
+
+      firebase.auth().signInWithEmailAndPassword(userId, password)
+        .then((userCredential) => {
+          if (userId == "molinamorales0103@gmail.com" || userId == "danidmta@gmail.com") {
+            window.location.href = 'https://control-de-vehiculos-386ee.web.app/admin.html';
+          } else {
+            window.location.href = 'https://control-de-vehiculos-386ee.web.app/registros.html';
+          }
+        })
+        .catch((error) => {
+          // Manejar el error
+          var errorCode = error.code;
+          var errorMessage = error.message;
+
+          if (errorCode === 'auth/internal-error') {
+            alert('Error: la contraseña ingresada incorrecta.');
+          } else if (errorCode == "auth/invalid-email") {
+            alert('Error: el formato del correo es invalido');
+          } else {
+            alert('Error: ' + errorMessage);
+          }
+
+        });
+    }
+
+    // Función para manejar el registro
+    function registrarse() {
+      var userId = document.getElementById('userIdSignUp').value;
+      var password = document.getElementById('signupPassword').value;
+
+      // Intentar crear un nuevo usuario
+      firebase.auth().createUserWithEmailAndPassword(userId, password)
+        .then((userCredential) => {
+          // Registro exitoso
+          alert('Registro exitoso');
+        })
+        .catch((error) => {
+          // Manejar el error
+          var errorCode = error.code;
+          var errorMessage = error.message;
+
+          if (errorCode === 'auth/email-already-in-use') {
+            alert('Error: Este correo electrónico ya está registrado. Por favor, inicia sesión.');
+          } else {
+            alert('Error: ' + errorMessage);
+          }
+        });
+    }
+
+    // Función para manejar el restablecimiento de contraseña
+    function restablecerContrasena() {
+      var resetEmail = document.getElementById('resetEmail').value;
+
+      // Enviar correo de restablecimiento de contraseña
+      firebase.auth().sendPasswordResetEmail(resetEmail)
+        .then(() => {
+          alert('Se ha enviado un correo electrónico para restablecer la contraseña. Por favor, revisa tu bandeja de entrada.');
+        })
+        .catch((error) => {
+          // Manejar el error
+          var errorCode = error.code;
+          var errorMessage = error.message;
+
+          if (errorCode === 'auth/invalid-email') {
+            alert('Error: El formato del correo electrónico es inválido.');
+          } else if (errorCode === 'auth/user-not-found') {
+            alert('Error: No se encontró un usuario con este correo electrónico.');
+          } else {
+            alert('Error: ' + errorMessage);
+          }
+        });
+    }
+
+    // Asignar funciones a los formularios
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      iniciarSesion();
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      registrarse();
+    });
+
+    document.getElementById('resetForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      restablecerContrasena();
+    });
+  </script>
+</body>
+</html>

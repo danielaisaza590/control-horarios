@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Horarios</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Firebase JavaScript SDK -->
+  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">
+      <img src="logo.jpeg" alt="Logo" height="30" class="d-inline-block align-top">
+      Control Horarios
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="mostrarSeccion('conductores')">Conductores</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="mostrarSeccion('vehiculos')">Vehículos</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="mostrarSeccion('clientes')">Clientes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="mostrarSeccion('registros-conductores');cargarRegistros();">Ver
+            Registros</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://control-de-vehiculos-386ee.web.app/registros.html"
+            onclick="mostrarSeccion('crear-registros');">Crear Registros</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Contenido de la página -->
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <!-- Sección de Conductores -->
+        <div id="conductores-section">
+          <h2 class="mb-4">Formulario de Conductor</h2>
+          <form id="conductorForm">
+            <div class="form-group">
+              <label for="identificacionConductor">Identificación:</label>
+              <input type="text" class="form-control" id="identificacionConductor" required>
+            </div>
+            <div class="form-group">
+              <label for="correoConductor">Correo:</label>
+              <input type="email" class="form-control" id="correoConductor" required>
+            </div>
+            <div class="form-group">
+              <label for="nombreConductor">Nombre:</label>
+              <input type="text" class="form-control" id="nombreConductor" required>
+            </div>
+            <div class="form-group">
+              <label for="apellidoConductor">Apellido:</label>
+              <input type="text" class="form-control" id="apellidoConductor" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Guardar Conductor</button>
+          </form>
+        </div>
+     
+        <!-- Sección de Vehículos -->
+        <div id="vehiculos-section" style="display: none;">
+          <h2 class="mb-4">Formulario de Vehículo</h2>
+          <form id="vehiculoForm">
+            <div class="form-group">
+              <label for="placaVehiculo">Placa:</label>
+              <input type="text" class="form-control" id="placaVehiculo" required>
+            </div>
+            <div class="form-group">
+              <label for="tipoVehiculo">Tipo:</label>
+              <input type="text" class="form-control" id="tipoVehiculo" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Guardar Vehículo</button>
+          </form>
+        </div>
+    
+        <!-- Sección de Clientes -->
+        <div id="clientes-section" style="display: none;">
+          <h2 class="mb-4">Formulario de Cliente</h2>
+          <form id="clienteForm">
+            <div class="form-group">
+              <label for="idCliente">ID:</label>
+              <input type="text" class="form-control" id="idCliente" required>
+            </div>
+            <div class="form-group">
+              <label for="nombreCliente">Nombre:</label>
+              <input type="text" class="form-control" id="nombreCliente" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Guardar Cliente</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    
+
+        <div id="registros-conductores-section" style="display: none;">
+          <!-- Espacio para mostrar los registros -->
+          <div class="col-md-12">
+            <div class="container">
+              <div class="row">
+                <div class="col-10 text-left"> 
+                  <h3>Registros</h3>
+                </div>
+                <div class="col-2">
+                  <button class="btn btn-success mb-2" onclick="descargarRegistrosExcel()">Descargar Excel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Identificación Conductor</th>
+                  <th>Vehículo</th>
+                  <th>Cliente</th>
+                  <th>Fecha Inicio</th>
+                  <th>Fecha Fin</th>
+                </tr>
+              </thead>
+              <tbody id="registrosBody">
+                <!-- Filas de la tabla se llenarán dinámicamente con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="crear-registros-section" style="display: none;">
+
+      </div>
+  </div>
+
+  <!-- Tu configuración de Firebase -->
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyBoN5r8e3Cq9RdsYt08xF-kvjrfdNHtNOk",
+      authDomain: "control-de-vehiculos-386ee.firebaseapp.com",
+      projectId: "control-de-vehiculos-386ee",
+      storageBucket: "control-de-vehiculos-386ee.appspot.com",
+      messagingSenderId: "911657234177",
+      appId: "1:911657234177:web:ddda940af1a762108fb500",
+      measurementId: "G-WJS4DGC2C7",
+      databaseURL: "https://control-de-vehiculos-386ee-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+
+    // Función para mostrar la sección correspondiente
+    function mostrarSeccion(seccion) {
+      document.getElementById('conductores-section').style.display = 'none';
+      document.getElementById('registros-conductores-section').style.display = 'none';
+      document.getElementById('vehiculos-section').style.display = 'none';
+      document.getElementById('clientes-section').style.display = 'none';
+      document.getElementById('crear-registros-section').style.display = 'none';
+
+      document.getElementById(seccion + '-section').style.display = 'block';
+    }
+
+    function cargarRegistros() {
+      const registrosRef = database.ref('registros');
+      const vehiculosRef = database.ref('vehiculos');
+      const clientesRef = database.ref('clientes');
+
+      registrosRef.once('value').then(snapshot => {
+        const registrosBody = document.getElementById('registrosBody');
+        registrosBody.innerHTML = '';
+
+        const registros = [];
+        snapshot.forEach(childSnapshot => {
+          registros.push({ key: childSnapshot.key, value: childSnapshot.val() });
+        });
+
+        // Función para cargar un registro y después llamar a la siguiente
+        function cargarRegistroSecuencial(index) {
+          if (index < registros.length) {
+            const registro = registros[index];
+            const row = registrosBody.insertRow();
+
+            row.insertCell(0).textContent = registro.value.identificacionConductor;
+
+            // Cargar el vehículo de forma secuencial
+            vehiculosRef.child(registro.value.vehiculoId).once('value').then(vehiculoSnapshot => {
+              const vehiculo = vehiculoSnapshot.val();
+              row.insertCell(1).textContent = `${vehiculo.placa} - ${vehiculo.tipo}`;
+            }).then(() => {
+              // Cargar el cliente de forma secuencial
+              clientesRef.child(registro.value.clienteId).once('value').then(clienteSnapshot => {
+                const cliente = clienteSnapshot.val();
+                row.insertCell(2).textContent = `${cliente.id} - ${cliente.nombre}`;
+              }).then(() => {
+                row.insertCell(3).textContent = registro.value.fechaInicio;
+                row.insertCell(4).textContent = registro.value.fechaFin;
+
+                // Llamar a la siguiente iteración
+                cargarRegistroSecuencial(index + 1);
+              });
+            });
+          }
+        }
+
+        // Comenzar la carga secuencial
+        cargarRegistroSecuencial(0);
+      });
+    }
+
+
+    // Función para guardar datos en la Realtime Database (Conductores)
+    function guardarConductor(event) {
+      event.preventDefault();
+      var identificacion = document.getElementById('identificacionConductor').value;
+      verificarExistencia('conductores', 'identificacion', identificacion, function (existe) {
+        if (!existe) {
+          // Si no existe, procede a guardar
+          var conductoresRef = firebase.database().ref('conductores');
+          var correo = document.getElementById('correoConductor').value;
+          var nombre = document.getElementById('nombreConductor').value;
+          var apellido = document.getElementById('apellidoConductor').value;
+          var conductor = {
+            identificacion: identificacion,
+            correo: correo,
+            nombre: nombre,
+            apellido: apellido
+          };
+          conductoresRef.push(conductor)
+            .then(function (snapshot) {
+              alertSuccess('Datos del conductor guardados exitosamente.');
+              limpiarFormulario('conductorForm');
+            })
+            .catch(function (error) {
+              alertError('Error al guardar datos del conductor: ' + error.message);
+            });
+        } else {
+          // Si ya existe, muestra alerta de error
+          alertError('Ya existe un conductor con esa identificación.');
+        }
+      });
+    }
+
+    // Función para guardar datos en la Realtime Database (Vehículos)
+    function guardarVehiculo(event) {
+      event.preventDefault();
+      var placa = document.getElementById('placaVehiculo').value;
+      verificarExistencia('vehiculos', 'placa', placa, function (existe) {
+        if (!existe) {
+          // Si no existe, procede a guardar
+          var vehiculosRef = firebase.database().ref('vehiculos');
+          var tipo = document.getElementById('tipoVehiculo').value;
+          var vehiculo = {
+            placa: placa,
+            tipo: tipo
+          };
+          vehiculosRef.push(vehiculo)
+            .then(function (snapshot) {
+              alertSuccess('Datos del vehículo guardados exitosamente.');
+              limpiarFormulario('vehiculoForm');
+            })
+            .catch(function (error) {
+              alertError('Error al guardar datos del vehículo: ' + error.message);
+            });
+        } else {
+          // Si ya existe, muestra alerta de error
+          alertError('Ya existe un vehículo con esa placa.');
+        }
+      });
+    }
+
+    // Función para guardar datos en la Realtime Database (Clientes)
+    function guardarCliente(event) {
+      event.preventDefault();
+      var id = document.getElementById('idCliente').value;
+      verificarExistencia('clientes', 'id', id, function (existe) {
+        if (!existe) {
+          // Si no existe, procede a guardar
+          var clientesRef = firebase.database().ref('clientes');
+          var nombre = document.getElementById('nombreCliente').value;
+          var cliente = {
+            id: id,
+            nombre: nombre
+          };
+          clientesRef.push(cliente)
+            .then(function (snapshot) {
+              alertSuccess('Datos del cliente guardados exitosamente.');
+              limpiarFormulario('clienteForm');
+            })
+            .catch(function (error) {
+              alertError('Error al guardar datos del cliente: ' + error.message);
+            });
+        } else {
+          // Si ya existe, muestra alerta de error
+          alertError('Ya existe un cliente con ese ID.');
+        }
+      });
+    }
+
+    // Función para verificar la existencia de un registro en la base de datos
+    function verificarExistencia(tipo, campo, valor, callback) {
+      var ref = firebase.database().ref(tipo);
+      ref.orderByChild(campo).equalTo(valor).once('value')
+        .then(function (snapshot) {
+          callback(snapshot.exists());
+        })
+        .catch(function (error) {
+          console.error(error);
+          callback(false);
+        });
+    }
+
+    // Función para mostrar alerta de éxito con Bootstrap
+    function alertSuccess(message) {
+      alertBootstrap('success', message);
+    }
+
+    // Función para mostrar alerta de error con Bootstrap
+    function alertError(message) {
+      alertBootstrap('danger', message);
+    }
+
+    // Función para mostrar alerta con Bootstrap
+    function alertBootstrap(type, message) {
+      var alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
+      alertDiv.role = 'alert';
+      alertDiv.innerHTML = message +
+        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+        '<span aria-hidden="true">&times;</span>' +
+        '</button>';
+      document.body.appendChild(alertDiv);
+    }
+
+    // Función para limpiar campos de un formulario
+    function limpiarFormulario(formId) {
+      document.getElementById(formId).reset();
+    }
+
+    // Función para descargar registros en Excel
+  function descargarRegistrosExcel() {
+    const registros = obtenerRegistrosParaDescargar();
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(registros);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registros');
+    XLSX.writeFile(workbook, 'registros.xlsx');
+  }
+
+  function restarFechas(fechaFin, fechaInicio) {
+  const diff = new Date(fechaFin) - new Date(fechaInicio);
+
+  // Verificar si la diferencia es NaN
+  if (isNaN(diff)) {
+    return 0;
+  }
+
+  const diffHoras = diff / (1000 * 60 * 60);
+  return diffHoras.toFixed(2);
+}
+
+  // Función para obtener los registros para descargar
+  function obtenerRegistrosParaDescargar() {
+    const registros = [];
+    const registrosTable = document.getElementById('registrosBody');
+    const rows = registrosTable.getElementsByTagName('tr');
+    for (let i = 0; i < rows.length; i++) {
+      const cells = rows[i].getElementsByTagName('td');
+      const registro = {
+        'Identificación Conductor': cells[0].textContent,
+        'Vehículo': cells[1].textContent,
+        'Cliente': cells[2].textContent,
+        'Fecha Inicio': cells[3].textContent,
+        'Fecha Fin': cells[4].textContent,
+        'Horas' : restarFechas(cells[4].textContent,cells[3].textContent)
+      };
+      registros.push(registro);
+    }
+    return registros;
+  }
+
+    // Asignar funciones a los formularios
+    document.getElementById('conductorForm').addEventListener('submit', guardarConductor);
+    document.getElementById('vehiculoForm').addEventListener('submit', guardarVehiculo);
+    document.getElementById('clienteForm').addEventListener('submit', guardarCliente);
+  </script>
+
+  <!-- Bootstrap JS y dependencias -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>
